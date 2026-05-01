@@ -2,3 +2,4 @@ headers_auth.json
 *~
 venv
 playlist.txt
+/playlists/*.el

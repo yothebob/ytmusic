@@ -46,10 +46,20 @@
       (insert (shell-command-to-string (format "source %s/venv/bin/activate && python3 %s/get_song_url.py '%s'" *ytmusic-path* *ytmusic-path* search-term)))
       (eval-buffer))))
 
+(defun ytmusic-save-playlist ()
+  (let ((new-playlist (read-string "Playlist Name: ")))
+   (with-temp-file (format "%s/playlists/%s.el" *ytmusic-path* new-playlist)
+     (insert (format "(setq *playlist-tracks* '%S)" *playlist-tracks*)))))
+
+(defun ytmusic-load-playlist (pl)
+  (with-temp-buffer
+      (insert-file-literally pl)
+      (eval-buffer)))
+
 (defun ytmusic-play ()
   (interactive)
   (let* ((buffer "*Music*")
-	(playlist *playlist-tracks*)
+	 (playlist (ytmusic-load-playlist (read-file-name "Playlist: " (concat *ytmusic-path* "/playlists/"))))
 	(buf (get-buffer buffer)))
     (when (not buf) (vterm buffer))
     (with-current-buffer buffer
@@ -72,11 +82,39 @@
     (vterm-send-string cmd)
     (vterm-send-return)))
 
-(global-set-key (kbd "C-c p p")
-(lambda ()
+(defun ytmusic-send-cmd (cmd)
+(with-current-buffer "*Music*"
+    (vterm-send-string cmd)))
+
+(defun ytmusic-send-pause/play ()
   (interactive)
-  (with-current-buffer "*Music*"
-    (vterm-send-string "p"))))
+  (ytmusic-send-cmd "p"))
+
+(defun ytmusic-send-vol-down (arg)
+  (interactive "p")
+  (dotimes (i arg)
+  (ytmusic-send-cmd "9")))
+
+(defun ytmusic-send-vol-up (arg)
+  (interactive "p")
+  (dotimes (i arg)
+  (ytmusic-send-cmd "0")))
+
+(defun ytmusic-send-next-song (arg)
+  (interactive "p")
+  (dotimes (i arg)
+  (ytmusic-send-cmd ">")))
+
+(defun ytmusic-send-prev-song (arg)
+  (interactive "p")
+  (dotimes (i arg)
+  (ytmusic-send-cmd "<")))
+
+(global-set-key (kbd "C-c p <") 'ytmusic-send-prev-song)
+(global-set-key (kbd "C-c p >") 'ytmusic-send-next-song)
+(global-set-key (kbd "C-c p 0") 'ytmusic-send-vol-up)
+(global-set-key (kbd "C-c p 9") 'ytmusic-send-vol-down)
+(global-set-key (kbd "C-c p p") 'ytmusic-send-pause/play)
 
 (provide 'ytmusic)
 ;;; ytmusic.el ends here

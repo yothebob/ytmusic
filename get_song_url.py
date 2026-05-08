@@ -4,7 +4,8 @@ from ytmusicapi import YTMusic
 def init_ytmusic():
     """Create a YTMusic instance – use auth file if present."""
     try:
-        return YTMusic('headers_auth.json')
+        ytmusic = YTMusic()
+        ytmusicapi.setup(filepath="headers_auth.json") 
     except Exception:
         return YTMusic()
 

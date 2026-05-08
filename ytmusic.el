@@ -39,6 +39,18 @@
 
 (setq *playlist-tracks* '())
 
+(defun ytmusic-edit-youtube-recommendations ()
+  (interactive)
+  (switch-to-buffer "*youtube-reccomendations*")
+  (with-current-buffer "*youtube-reccomendations*"
+    (erase-buffer)
+    (insert ";; M-x eval-buffer to save edits.\n")
+    (insert "(setq *playlist-tracks* '(\n")
+    (dolist (track *playlist-tracks*)
+      (insert (format "  %S\n" track)))
+    (insert "))\n")
+      (lisp-interaction-mode)))
+
 (defun ytmusic-get-youtube-recommendations ()
   (interactive)
   (let ((search-term (read-string "Song: ")))
@@ -47,11 +59,16 @@
       (eval-buffer))))
 
 (defun ytmusic-save-playlist ()
+  (interactive)
   (let ((new-playlist (read-string "Playlist Name: ")))
    (with-temp-file (format "%s/playlists/%s.el" *ytmusic-path* new-playlist)
-     (insert (format "(setq *playlist-tracks* '%S)" *playlist-tracks*)))))
+    (insert "(setq *playlist-tracks* '(\n")
+    (dolist (track *playlist-tracks*)
+      (insert (format "  %S\n" track)))
+    (insert "))\n"))))
 
 (defun ytmusic-load-playlist (pl)
+  (interactive)
   (with-temp-buffer
       (insert-file-literally pl)
       (eval-buffer)))
@@ -73,7 +90,7 @@
 
 (defun ytmusic-vterm-playlist--run (playlist)
   (let* ((cmd (format "mpv --playlist='%s'" *ytmusic-playlist-file*))
-	 (playlist-file (find-file-noselect *ytmusic-playlist-file*)))
+	 (playlist-file (find-file-noselect (concat *ytmusic-path* "/" *ytmusic-playlist-file*))))
     (with-current-buffer *ytmusic-playlist-file*
       (erase-buffer)
       (insert (mapconcat '(lambda (x) (format "%s" (plist-get x :url))) *playlist-tracks* "\n"))
@@ -89,6 +106,10 @@
 (defun ytmusic-send-pause/play ()
   (interactive)
   (ytmusic-send-cmd "p"))
+
+(defun ytmusic-send-quit ()
+  (interactive)
+  (ytmusic-send-cmd "q"))
 
 (defun ytmusic-send-vol-down (arg)
   (interactive "p")
@@ -115,6 +136,7 @@
 (global-set-key (kbd "C-c p 0") 'ytmusic-send-vol-up)
 (global-set-key (kbd "C-c p 9") 'ytmusic-send-vol-down)
 (global-set-key (kbd "C-c p p") 'ytmusic-send-pause/play)
+(global-set-key (kbd "C-c p q") 'ytmusic-send-quit)
 
 (provide 'ytmusic)
 ;;; ytmusic.el ends here

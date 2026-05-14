@@ -39,6 +39,13 @@
 
 (setq *playlist-tracks* '())
 
+(defun ytmusic-song (url)
+  (let ((found-track
+	 (cl-find-if #'(lambda (x) (equal (plist-get x :url) url)) *playlist-tracks*)))
+    (when found-track (message (format "Playing %s By %s..."
+				       (plist-get found-track :title)
+				       (plist-get found-track :artist))))))
+
 (defun ytmusic-edit-youtube-recommendations ()
   (interactive)
   (switch-to-buffer "*youtube-reccomendations*")

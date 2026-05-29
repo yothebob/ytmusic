@@ -38,13 +38,21 @@
      :group   'ytmusic)
 
 (setq *playlist-tracks* '())
+(setq *last-song* "")
+
+(defun ytmusic-playing ()
+  (interactive)
+  (message *last-song*))
 
 (defun ytmusic-song (url)
   (let ((found-track
 	 (cl-find-if #'(lambda (x) (equal (plist-get x :url) url)) *playlist-tracks*)))
-    (when found-track (message (format "Playing %s By %s..."
-				       (plist-get found-track :title)
-				       (plist-get found-track :artist))))))
+    (when found-track
+      (progn
+	(setq *last-song* (format "Playing %s By %s..."
+				  (plist-get found-track :title)
+				  (plist-get found-track :artist)))
+	(message *last-song*)))))
 
 (defun ytmusic-edit-youtube-recommendations ()
   (interactive)
@@ -74,16 +82,17 @@
       (insert (format "  %S\n" track)))
     (insert "))\n"))))
 
-(defun ytmusic-load-playlist (pl)
+(defun ytmusic-load-playlist ()
   (interactive)
-  (with-temp-buffer
+  (let ((pl (read-file-name "Playlist: " (concat *ytmusic-path* "/playlists/"))))
+    (with-temp-buffer
       (insert-file-literally pl)
-      (eval-buffer)))
+      (eval-buffer))))
 
 (defun ytmusic-play ()
   (interactive)
   (let* ((buffer "*Music*")
-	 (playlist (ytmusic-load-playlist (read-file-name "Playlist: " (concat *ytmusic-path* "/playlists/"))))
+	 (playlist (ytmusic-load-playlist))
 	(buf (get-buffer buffer)))
     (when (not buf) (vterm buffer))
     (with-current-buffer buffer
